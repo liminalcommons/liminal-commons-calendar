@@ -41,13 +41,8 @@ AGENT_LOG_DIR = STATE_DIR / "agent_logs"
 
 AGENTS = {
     "hermes": {
-        "label": "Hermes",
+        "label": "Hermes Agent",
         "cmd": ["hermes", "chat", "-q", "{prompt}"],
-        "timeout": 600,
-    },
-    "claude": {
-        "label": "Claude Code",
-        "cmd": ["claude", "-p", "{prompt}", "--allowedTools", "Read,Edit,Bash,Write", "--max-turns", "20"],
         "timeout": 600,
     },
     "opencode": {
@@ -57,7 +52,7 @@ AGENTS = {
     },
 }
 
-DEFAULT_AGENT = "claude"
+DEFAULT_AGENT = "hermes"
 
 
 def init_db() -> None:
@@ -171,17 +166,16 @@ def spawn_agent(chat_id: int, agent: str, prompt: str) -> tuple[int, Path]:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = (
-        "Hi Erik. This is your vibecoding gateway for the Liminal Commons calendar.\n\n"
-        "I am not a finished bot — I connect you to coding agents that edit the repo.\n\n"
+        "Hi Erik. I am Hermes Agent, your vibecoding partner for the Liminal Commons calendar.\n\n"
+        "Every message you send is logged and can be turned into a coding task.\n\n"
         "Commands:\n"
-        "/claude <prompt> — run Claude Code\n"
-        "/opencode <prompt> — run OpenCode\n"
-        "/hermes <prompt> — run Hermes Agent\n"
-        "/status — show running agents\n"
-        "/cancel <id> — stop an agent\n"
-        "/history — last messages\n\n"
+        "/hermes <prompt> \u2014 run Hermes Agent (default)\n"
+        "/opencode <prompt> \u2014 run OpenCode\n"
+        "/status \u2014 show running agents\n"
+        "/cancel <id> \u2014 stop an agent\n"
+        "/history \u2014 last messages\n\n"
         "Shorthand:\n"
-        "@claude add an event list command\n"
+        "@hermes add an /events command\n"
         "@opencode write tests for the calendar"
     )
     await update.message.reply_text(text)
@@ -269,10 +263,6 @@ def summarize_log(log_file: Path, max_chars: int = 3500) -> str:
     return f"```\n{tail}\n```"
 
 
-async def claude_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await dispatch_agent(update, context, "claude")
-
-
 async def opencode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await dispatch_agent(update, context, "opencode")
 
@@ -356,8 +346,8 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         return
 
     await update.message.reply_text(
-        "I pass your prompts to coding agents. Try:\n"
-        "@claude <prompt>\n"
+        "I am Hermes Agent. Send me a coding prompt:\n"
+        "@hermes <prompt>\n"
         "@opencode <prompt>\n"
         "or /help for commands."
     )
@@ -371,7 +361,6 @@ def main() -> None:
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
-    app.add_handler(CommandHandler("claude", claude_cmd))
     app.add_handler(CommandHandler("opencode", opencode_cmd))
     app.add_handler(CommandHandler("hermes", hermes_cmd))
     app.add_handler(CommandHandler("status", status_cmd))

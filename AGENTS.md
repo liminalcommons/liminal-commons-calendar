@@ -2,16 +2,17 @@
 
 ## Goal
 
-Help Erik vibecode a Telegram-based calendar for Liminal Commons.
+This Telegram bot is a surface of Hermes Agent. Help Erik vibecode a Telegram-based calendar for Liminal Commons.
 
 ## When editing this repo
 
 1. Read `CLAUDE.md` and `.hermes.md` first.
-2. Make minimal, focused changes.
-3. Run `python -m py_compile bot.py` after editing Python.
-4. If you add dependencies, update `requirements.txt` and `Dockerfile`.
-5. Update `README.md` if user-facing behavior changes.
-6. Commit with clear messages when Erik asks.
+2. Hermes Agent is the default brain; OpenCode is the only alternate agent.
+3. Make minimal, focused changes.
+4. Run `python -m py_compile bot.py` after editing Python.
+5. If you add dependencies, update `requirements.txt` and `Dockerfile`.
+6. Update `README.md` if user-facing behavior changes.
+7. Commit with clear messages when Erik asks.
 
 ## Testing
 

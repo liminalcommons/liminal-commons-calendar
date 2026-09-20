@@ -4,18 +4,28 @@
 
 1. Clone the repo.
 2. Copy `.env.example` to `.env` and add the real token.
-3. Start the bot:
-   - **Windows**: `\.scripts\dev.ps1 up`
+3. Start the bot on the host (recommended for vibecoding):
+   - **Windows**: `.\scripts\dev.ps1 run-host`
+   - **Linux/macOS**: `make run-host`
+4. Or run in Docker:
+   - **Windows**: `.\scripts\dev.ps1 up`
    - **Linux/macOS**: `make up`
-4. Follow logs: `make logs`
 
-## Edit events from the repo
+## Vibecoding with Hermes
 
-`events.json` is the source of truth. You can edit it directly in the repo; the bot merges remote and local copies on startup/sync.
+This bot is a surface of Hermes Agent. In Telegram:
+
+```
+/hermes add an /events command
+@opencode write a test for the database schema
+/status
+/cancel 1
+/history
+```
 
 ## Two-way GitHub sync
 
-To push events back to GitHub when `/add` or `/delete` is used:
+To push changes back to GitHub when agents edit the repo:
 
 1. Create a fine-grained personal access token with read/write access to `liminalcommons/liminal-commons-calendar`.
 2. Add it to `.env` as `GITHUB_TOKEN=`.

@@ -1,8 +1,7 @@
-start - Start the gateway
+start - Start Hermes Agent
 help - Show commands
-claude - Send a prompt to Claude Code: /claude <prompt>
-opencode - Send a prompt to OpenCode: /opencode <prompt>
 hermes - Send a prompt to Hermes Agent: /hermes <prompt>
+opencode - Send a prompt to OpenCode: /opencode <prompt>
 status - Show running agents
 cancel - Stop an agent: /cancel <id>
 history - Show recent messages

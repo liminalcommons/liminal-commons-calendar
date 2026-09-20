@@ -5,12 +5,12 @@ vibecode the Liminal Commons calendar with AI coding agents.
 
 ## What it does
 
+- This bot **is** Hermes Agent for the Liminal Commons calendar.
 - Receives messages from Erik on Telegram (`@Erikliminalcommonsbot`).
 - Logs everything to a local SQLite database (`data/gateway.db`).
-- Dispatches prompts to local coding agents:
-  - `/claude <prompt>` → Claude Code
+- Runs Hermes Agent by default; can also dispatch OpenCode:
+  - `/hermes <prompt>` → Hermes Agent (default)
   - `/opencode <prompt>` → OpenCode
-  - `/hermes <prompt>` → Hermes Agent
 - Reports agent output back to Telegram.
 
 ## Quick start
@@ -32,7 +32,7 @@ vibecode the Liminal Commons calendar with AI coding agents.
 ## Telegram usage
 
 ```
-/claude add an /events command that lists calendar entries
+/hermes add an /events command that lists calendar entries
 @opencode write a test for the database schema
 /status
 /cancel 3
