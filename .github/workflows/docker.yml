@@ -13,10 +13,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build image
         run: docker build -t erik-liminal-calendar-bot .
-      - name: Test token (masked)
+      - name: Test bot token and GitHub sync
         if: github.event_name == 'push'
         env:
           ERIK_BOT_TOKEN: ${{ secrets.ERIK_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          GITHUB_REPO: liminalcommons/liminal-commons-calendar
         run: |
-          docker run --rm -e ERIK_BOT_TOKEN="$ERIK_BOT_TOKEN" erik-liminal-calendar-bot python -c \
+          docker run --rm \
+            -e ERIK_BOT_TOKEN="$ERIK_BOT_TOKEN" \
+            -e GITHUB_TOKEN="$GITHUB_TOKEN" \
+            -e GITHUB_REPO="$GITHUB_REPO" \
+            erik-liminal-calendar-bot python -c \\
             "import asyncio, os; from telegram import Bot; print(asyncio.run(Bot(os.environ['ERIK_BOT_TOKEN']).get_me()).username)"
