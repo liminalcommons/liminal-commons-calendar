@@ -1,0 +1,12 @@
+services:
+  bot:
+    build: .
+    container_name: erik-liminal-calendar-bot
+    env_file: .env
+    volumes:
+      - ./events.json:/app/events.json
+      - ./data:/app/data
+      - ./scripts:/app/scripts:ro
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
