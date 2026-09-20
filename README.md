@@ -20,13 +20,30 @@ Telegram bot that manages the Liminal Commons community calendar.
 
 ## Dev helpers
 
-```bash
-./scripts/dev.sh build        # rebuild image
-./scripts/dev.sh logs         # follow logs
-./scripts/dev.sh shell        # shell inside container
-./scripts/dev.sh test-token   # verify Telegram token
-./scripts/dev.sh sync-repo    # sync events with GitHub repo
+### Windows
+
+```powershell
+.\scripts\dev.ps1 up
+.\scripts\dev.ps1 logs
+.\scripts\dev.ps1 test-token
 ```
+
+### macOS / Linux / WSL
+
+```bash
+make up        # start bot
+make logs      # follow logs
+make test      # verify Telegram token
+make down      # stop bot
+```
+
+### BotFather commands
+
+Send `botfather-commands.txt` to [@BotFather](https://t.me/botfather) with `/setcommands`.
+
+## CI
+
+GitHub Actions builds the Docker image on every push. Add `ERIK_BOT_TOKEN` to the repo's GitHub secrets if you want the CI smoke test to verify the token.
 
 ## GitHub integration
 

@@ -1,0 +1,22 @@
+name: Build Docker image
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t erik-liminal-calendar-bot .
+      - name: Test token (masked)
+        if: github.event_name == 'push'
+        env:
+          ERIK_BOT_TOKEN: ${{ secrets.ERIK_BOT_TOKEN }}
+        run: |
+          docker run --rm -e ERIK_BOT_TOKEN="$ERIK_BOT_TOKEN" erik-liminal-calendar-bot python -c \
+            "import asyncio, os; from telegram import Bot; print(asyncio.run(Bot(os.environ['ERIK_BOT_TOKEN']).get_me()).username)"

@@ -1,0 +1,6 @@
+start - Hello and command list
+help - Show help
+events - List all events
+add - Add an event (interactive)
+delete - Delete an event: /delete <id>
+cancel - Cancel current action
