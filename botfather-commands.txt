@@ -1,6 +1,8 @@
-start - Hello and command list
-help - Show help
-events - List all events
-add - Add an event (interactive)
-delete - Delete an event: /delete <id>
-cancel - Cancel current action
+start - Start the gateway
+help - Show commands
+claude - Send a prompt to Claude Code: /claude <prompt>
+opencode - Send a prompt to OpenCode: /opencode <prompt>
+hermes - Send a prompt to Hermes Agent: /hermes <prompt>
+status - Show running agents
+cancel - Stop an agent: /cancel <id>
+history - Show recent messages

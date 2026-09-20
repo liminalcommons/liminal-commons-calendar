@@ -1,22 +1,43 @@
-# Erik / Liminal Commons Calendar Bot
+# Liminal Commons Calendar — Erik's Vibecoding Gateway
 
-Telegram bot that manages the Liminal Commons community calendar.
+This is **not a finished bot**. It is a Telegram-based gateway for Erik to
+vibecode the Liminal Commons calendar with AI coding agents.
+
+## What it does
+
+- Receives messages from Erik on Telegram (`@Erikliminalcommonsbot`).
+- Logs everything to a local SQLite database (`data/gateway.db`).
+- Dispatches prompts to local coding agents:
+  - `/claude <prompt>` → Claude Code
+  - `/opencode <prompt>` → OpenCode
+  - `/hermes <prompt>` → Hermes Agent
+- Reports agent output back to Telegram.
 
 ## Quick start
 
-1. Copy `.env.example` to `.env` and fill in values.
-2. Run the bot:
-   - Windows: `\.scripts\dev.ps1 up`
-   - macOS/Linux: `./scripts/dev.sh up`
-3. Message the bot on Telegram: `@Erikliminalcommonsbot`
+1. Copy `.env.example` to `.env` and add the real bot token.
+2. Run directly on the host (recommended for vibecoding):
+   ```powershell
+   python -m venv .venv
+   .venv\Scripts\activate
+   pip install -r requirements.txt
+   python bot.py
+   ```
+3. Or run in Docker:
+   ```bash
+   make up
+   make logs
+   ```
 
-## Commands
+## Telegram usage
 
-- `/start` — hello
-- `/events` — list calendar
-- `/add` — add an event (interactive)
-- `/delete <id>` — delete an event
-- `/cancel` — cancel current action
+```
+/claude add an /events command that lists calendar entries
+@opencode write a test for the database schema
+/status
+/cancel 3
+/history
+```
 
 ## Dev helpers
 
@@ -37,14 +58,20 @@ make test      # verify Telegram token
 make down      # stop bot
 ```
 
-### BotFather commands
+## Project context for agents
 
-Send `botfather-commands.txt` to [@BotFather](https://t.me/botfather) with `/setcommands`.
+- `CLAUDE.md` — project intent and rules
+- `.hermes.md` — Hermes-specific context
+- `AGENTS.md` — generic agent instructions
+
+## Persistence
+
+- `data/gateway.db` — SQLite: messages + agent run history
+- `data/agent_logs/` — stdout/stderr from agent runs
+- Both are gitignored.
 
 ## CI
 
-GitHub Actions builds the Docker image on every push. Add `ERIK_BOT_TOKEN` to the repo's GitHub secrets if you want the CI smoke test to verify the token.
-
-## GitHub integration
-
-Set `GITHUB_TOKEN` and `GITHUB_REPO` in `.env`. The bot can sync `events.json` with the repo so events live in version control and Erik can edit them as code.
+GitHub Actions builds the Docker image on every push. It uses:
+- `ERIK_BOT_TOKEN` secret to verify the bot token
+- `BOT_GITHUB_TOKEN` secret for sync smoke tests
