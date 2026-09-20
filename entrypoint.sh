@@ -6,5 +6,5 @@ if [ -n "${GITHUB_TOKEN:-}" ] && [ -f /app/scripts/sync_repo.py ]; then
     python3 /app/scripts/sync_repo.py
 fi
 
-# Start the bot
-exec python3 -u /app/bot.py
+# Start the bot (or run the overridden command)
+exec "$@"
