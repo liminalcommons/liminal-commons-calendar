@@ -1,0 +1,27 @@
+{
+  "name": "Liminal Commons Calendar Bot",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/app",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  },
+  "postCreateCommand": "pip install -r requirements.txt",
+  "remoteEnv": {
+    "ERIK_BOT_TOKEN": "${localEnv:ERIK_BOT_TOKEN}",
+    "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
+    "GITHUB_REPO": "${localEnv:GITHUB_REPO}"
+  }
+}
