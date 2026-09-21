@@ -1,7 +1,13 @@
 # Liminal Commons Calendar — Erik's Vibecoding Gateway
 
-This is **not a finished bot**. It is a Telegram-based gateway for Erik to
-vibecode the Liminal Commons calendar with AI coding agents.
+This is **not a finished bot**. `@Erikliminalcommonsbot` **is** the Hermes Agent
+(`coding` profile) — Erik chats with it directly, with full tools, memory, and
+repo access. Just talk.
+
+`bot.py` in this repo is a standalone alternate runner (conversational chat via
+`hermes chat -q`, plus `/hermes` and `/opencode` background dispatch). It is NOT
+currently polling — only one client may hold the Telegram token, and the live
+holder is the `coding`-profile Hermes gateway.
 
 ## What it does
 
