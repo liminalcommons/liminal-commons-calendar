@@ -1,7 +1,9 @@
-start - Start Hermes Agent
+start - Start chatting with Hermes Agent
 help - Show commands
-hermes - Send a prompt to Hermes Agent: /hermes <prompt>
-opencode - Send a prompt to OpenCode: /opencode <prompt>
-status - Show running agents
-cancel - Stop an agent: /cancel <id>
+hermes - Long task in the background: /hermes <prompt>
+opencode - Run OpenCode instead: /opencode <prompt>
+status - Show running background tasks
+cancel - Stop a task: /cancel <id>
 history - Show recent messages
+new - Clear conversation
+model - What brain I'm running

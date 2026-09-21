@@ -31,13 +31,19 @@ vibecode the Liminal Commons calendar with AI coding agents.
 
 ## Telegram usage
 
+Just talk — every message gets a real reply from Hermes Agent.
+
 ```
-/hermes add an /events command that lists calendar entries
+/hermes rebuild the calendar view in the background
 @opencode write a test for the database schema
 /status
 /cancel 3
 /history
+/new
+/model
 ```
+
+Plain chat = quick conversational turn (5 min cap). `/hermes` = long background task with a log file.
 
 ## Dev helpers
 

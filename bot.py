@@ -54,6 +54,20 @@ AGENTS = {
 
 DEFAULT_AGENT = "hermes"
 
+HERMES_BIN = os.environ.get("HERMES_BIN", "hermes")
+HERMES_PROFILE = os.environ.get("HERMES_PROFILE", "coding")
+CHAT_TIMEOUT = int(os.environ.get("CHAT_TIMEOUT", "300"))
+HISTORY_LIMIT = int(os.environ.get("HISTORY_LIMIT", "12"))
+
+SYSTEM_PROMPT = os.environ.get(
+    "ERIK_SYSTEM_PROMPT",
+    "You are Erik's personal coding companion for the Liminal Commons community calendar. "
+    "You run with full tool access in the calendar repo. Chat naturally and concisely. "
+    "Keep Telegram replies short; code is the payload. When asked to build, run, or verify "
+    "something, use your tools and report real output — never fabricate results. "
+    "Plain text only, no markdown tables.",
+)
+
 
 def init_db() -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -166,17 +180,15 @@ def spawn_agent(chat_id: int, agent: str, prompt: str) -> tuple[int, Path]:
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = (
-        "Hi Erik. I am Hermes Agent, your vibecoding partner for the Liminal Commons calendar.\n\n"
-        "Every message you send is logged and can be turned into a coding task.\n\n"
-        "Commands:\n"
-        "/hermes <prompt> \u2014 run Hermes Agent (default)\n"
-        "/opencode <prompt> \u2014 run OpenCode\n"
-        "/status \u2014 show running agents\n"
-        "/cancel <id> \u2014 stop an agent\n"
-        "/history \u2014 last messages\n\n"
-        "Shorthand:\n"
-        "@hermes add an /events command\n"
-        "@opencode write tests for the calendar"
+        "Hi Erik. I am Hermes Agent, your coding companion for the Liminal Commons calendar.\n\n"
+        "Just talk to me — every message gets a real reply.\n\n"
+        "/hermes <prompt> — long task in the background\n"
+        "/opencode <prompt> — run OpenCode instead\n"
+        "/status — running background tasks\n"
+        "/cancel <id> — stop one\n"
+        "/history — recent messages\n"
+        "/new — clear conversation\n"
+        "/model — what brain I'm running"
     )
     await update.message.reply_text(text)
 
@@ -230,7 +242,7 @@ def terminate_process(pid: int) -> None:
 
 async def monitor_agent(run_id: int, pid: int, log_file: Path, chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Poll the agent process and send a summary when it finishes."""
-    agent_cfg = AGENTS.get(DEFAULT_AGENT, AGENTS["claude"])
+    agent_cfg = AGENTS.get(DEFAULT_AGENT, AGENTS["hermes"])
     timeout = agent_cfg["timeout"]
     start = time.time()
     try:
@@ -261,6 +273,93 @@ def summarize_log(log_file: Path, max_chars: int = 3500) -> str:
     # Tail is usually most useful
     tail = text[-max_chars:] if len(text) > max_chars else text
     return f"```\n{tail}\n```"
+
+
+def get_history(chat_id: int, limit: int = HISTORY_LIMIT) -> list[dict]:
+    with sqlite3.connect(STATE_DB) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT role, text FROM messages WHERE chat_id = ? AND role IN ('user', 'assistant') "
+            "ORDER BY id DESC LIMIT ?",
+            (chat_id, limit),
+        ).fetchall()
+    return [{"role": r["role"], "text": r["text"] or ""} for r in reversed(rows)]
+
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def extract_chat_reply(raw: str) -> str:
+    """Pull the assistant reply out of `hermes chat -q` console output."""
+    clean = ANSI_RE.sub("", raw)
+    lines = clean.splitlines()
+    # Prefer the Hermes answer box; there may also be Reasoning boxes.
+    starts = [i for i, l in enumerate(lines) if l.lstrip().startswith("╭")]
+    for s in starts:
+        if "Hermes" in lines[s]:
+            end = next(
+                (i for i in range(len(lines) - 1, s, -1) if lines[i].lstrip().startswith("╰")),
+                None,
+            )
+            if end is not None:
+                body = "\n".join(
+                    l[2:] if l.startswith("│ ") else l for l in lines[s + 1 : end]
+                ).strip()
+                if body:
+                    return body
+    # Fallback: drop known chrome lines, keep the rest
+    kept = [
+        l for l in lines
+        if l.strip()
+        and not l.startswith(("Query:", "Initializing", "Resume this session", "Session:", "Title:", "Duration:", "Messages:", "─", "hermes "))
+        and not l.lstrip().startswith(("╭", "╰", "│", "┌", "└"))
+    ]
+    text = "\n".join(kept).strip()
+    return text if text else clean.strip()[-1500:]
+
+
+async def chat_with_hermes(chat_id: int, message: str) -> str:
+    """One conversational turn through the coding-profile Hermes agent."""
+    history = get_history(chat_id)
+    convo = "\n".join(
+        f"{'Erik' if m['role'] == 'user' else 'Hermes'}: {m['text']}" for m in history
+    )
+    prompt = (
+        f"{SYSTEM_PROMPT}\n\n"
+        + (f"Conversation so far:\n{convo}\n\n" if convo else "")
+        + f"Erik: {message}"
+    )
+    proc = await asyncio.create_subprocess_exec(
+        HERMES_BIN, "--profile", HERMES_PROFILE, "chat", "-q", prompt,
+        cwd=REPO_ROOT,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    try:
+        out, _ = await asyncio.wait_for(proc.communicate(), timeout=CHAT_TIMEOUT)
+    except asyncio.TimeoutError:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+        return "That took longer than 5 minutes — I killed it. Try a smaller ask or /hermes to run it in the background."
+    return extract_chat_reply(out.decode("utf-8", errors="ignore")) or "(empty reply — try again)"
+
+
+def split_message(text: str, limit: int = 4000) -> list[str]:
+    if len(text) <= limit:
+        return [text]
+    chunks, current = [], []
+    size = 0
+    for line in text.splitlines(keepends=True):
+        if size + len(line) > limit and current:
+            chunks.append("".join(current))
+            current, size = [], 0
+        current.append(line)
+        size += len(line)
+    if current:
+        chunks.append("".join(current))
+    return chunks or [text]
 
 
 async def opencode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -310,6 +409,23 @@ async def cancel_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await update.message.reply_text(f"Could not cancel run #{run_id}: {e}")
 
 
+async def new_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.effective_chat.id
+    with sqlite3.connect(STATE_DB) as conn:
+        conn.execute(
+            "DELETE FROM messages WHERE chat_id = ? AND role IN ('user', 'assistant')",
+            (chat_id,),
+        )
+    await update.message.reply_text("Fresh start. What are we building?")
+
+
+async def model_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(
+        f"Brain: Hermes Agent (profile '{HERMES_PROFILE}'), OpenCode Go subscription. "
+        "History carries the last few turns; /new clears it."
+    )
+
+
 async def history_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     with sqlite3.connect(STATE_DB) as conn:
@@ -345,12 +461,17 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await dispatch_agent(update, context, agent)
         return
 
-    await update.message.reply_text(
-        "I am Hermes Agent. Send me a coding prompt:\n"
-        "@hermes <prompt>\n"
-        "@opencode <prompt>\n"
-        "or /help for commands."
-    )
+    thinking = await update.message.reply_text("…")
+    await update.message.chat.send_action("typing")
+    try:
+        reply = await chat_with_hermes(chat_id, text)
+    except Exception as e:
+        reply = f"Brain hiccup: {e}"
+    log_message(chat_id, user_id, username, "assistant", reply)
+    chunks = split_message(reply)
+    await thinking.edit_text(chunks[0])
+    for chunk in chunks[1:]:
+        await update.message.reply_text(chunk)
 
 
 def main() -> None:
@@ -366,6 +487,8 @@ def main() -> None:
     app.add_handler(CommandHandler("status", status_cmd))
     app.add_handler(CommandHandler("cancel", cancel_cmd))
     app.add_handler(CommandHandler("history", history_cmd))
+    app.add_handler(CommandHandler("new", new_cmd))
+    app.add_handler(CommandHandler("model", model_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
 
     print("Vibecoding gateway polling...")
